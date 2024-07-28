@@ -22,6 +22,26 @@ if "google_sheets_creds_json" not in st.session_state:
     credentials_json = json.dumps(google_sheets_creds)
     st.session_state["google_sheets_creds_json"] = credentials_json
 
+# google_sheets_creds = st.secrets["google_sheets"]
+
+# Acessar o segredo TOML
+google_sheets_creds = st.secrets["google_sheets"]
+
+# Construir o dicionário JSON
+credentials_json = {
+    "type": google_sheets_creds["type"],
+    "project_id": google_sheets_creds["project_id"],
+    "private_key_id": google_sheets_creds["private_key_id"],
+    "private_key": google_sheets_creds["private_key"],
+    "client_email": google_sheets_creds["client_email"],
+    "client_id": google_sheets_creds["client_id"],
+    "auth_uri": google_sheets_creds["auth_uri"],
+    "token_uri": google_sheets_creds["token_uri"],
+    "auth_provider_x509_cert_url": google_sheets_creds["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": google_sheets_creds["client_x509_cert_url"],
+    "universe_domain": google_sheets_creds["universe_domain"],
+}
+
 # --- LEITURA DO ARQUIVO EXCEL ---
 @st.cache_resource(show_spinner=False)  # Use st.cache_resource em vez de st.cache_data
 def load_data(
@@ -29,7 +49,8 @@ def load_data(
     url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
     ):
     
-    credentials = pygsheets.authorize(service_account_json=st.session_state["google_sheets_creds_json"])
+    credentials = pygsheets.authorize(service_account_json=credentials_json)
+
 
     file = credentials.open_by_url(url_planilha)
     tab = file.worksheet_by_title(sheet_name)
