@@ -30,7 +30,7 @@ credentials_json = {
     "universe_domain": st.secrets["universe_domain"],
 }
 
-aa = json.dumps(credentials_json)
+credentials_dump = json.dumps(credentials_json)
 
 
 # --- LEITURA DO ARQUIVO EXCEL ---
@@ -40,7 +40,7 @@ def load_data(
     url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
     ):
     
-    credentials = pygsheets.authorize(service_account_json=aa)
+    credentials = pygsheets.authorize(service_account_json=credentials_dump)
 
 
     file = credentials.open_by_url(url_planilha)
@@ -57,10 +57,33 @@ def load_data(
     
 
 df = load_data("CardFinancialModel")
+df_cripto = load_data("CriptoFinancialModel")
+df_3 = load_data("Conta")
+df_4 = load_data("Projecao-Original")
+df_5 = load_data("Conta-Proposta")
+df_6 = load_data("Projecao-Proposta")
 
 ticker = yf.Ticker("BRL=X")
 todays_data = ticker.history(period='1d')
 dollar = todays_data['Close'].iloc[0]
+
+def load_initial_select_values(tab_name, cell_ranges):
+    try:
+        credentials = pygsheets.authorize(service_account_json=credentials_dump)
+        url_planilha = "https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
+        file = credentials.open_by_url(url_planilha)
+        tab = file.worksheet_by_title(tab_name)
+
+        initial_values = []
+        for cell_range in cell_ranges:
+            initial_values.append(tab.get_value(cell_range))
+        return initial_values
+    except pygsheets.exceptions.WorksheetNotFound:
+        st.error(f"Planilha '{tab_name}' não encontrada.")
+        return None
+    except Exception as e:
+        st.error(f"Erro ao carregar valores iniciais: {e}")
+        return None
 
 def criar_tabela_aba(df, nome, intervalo, cabecalho=None, remove_blank=False):
     """
@@ -143,6 +166,19 @@ def load_tab1(df, dollar):
     criar_tabela_aba(df, "(-) Cashback - Bipa 'Normal'", [114, 115, 2, 8], cabecalho=cabecalhoUsers)
     criar_tabela_aba(df, "(=) Consolidated Unit Economics", [117, 118, 2, 8], cabecalho=cabecalhoUsers)
 
+def load_tab2(df_cripto, dollar):
+    cabecalhoUsers=["Users", "Unit"] + [f"Month {i}" for i in range(1, 61)]
+    criar_tabela_aba(df_cripto, "Users", [11, 13, 2, 63], cabecalho=cabecalhoUsers)
+
+    cabecalhoCriptoT=["Cripto Transactions", "Unit"] + [f"Month {i}" for i in range(1, 61)]
+    criar_tabela_aba(df_cripto, "Cripto Transactions", [16, 16, 2, 63], cabecalho=cabecalhoCriptoT)
+
+    cabecalhoCriptoF=["% Cripto Fee", "Unit"] + [f"Month {i}" for i in range(1, 61)]
+    criar_tabela_aba(df_cripto, "% Cripto Fee", [24, 24, 2, 63], cabecalho=cabecalhoCriptoF)
+
+    cabecalhoTotal=["Total", "Unit"] + [f"Month {i}" for i in range(1, 61)]
+    criar_tabela_aba(df_cripto, "Total", [29, 31, 2, 63], cabecalho=cabecalhoTotal)
+
 with tab1:  # Conteúdo da aba CardFinancialModel  
     # cenario_usuarios = st.selectbox("Select Scenario", ["Base", "Upside", "Downside"], index=0)
     # cenario_map = {"Base": 1, "Upside": 2, "Downside": 3}
@@ -152,15 +188,19 @@ with tab1:  # Conteúdo da aba CardFinancialModel
 
     # --- Dicionário para mapear as opções dos selects para valores numéricos ---
     st.title("Credit Card")
+    initial_values = load_initial_select_values("CardFinancialModel", ["C5", "C7", "C9"])
+    default_index_users = ["Base", "Upside", "Downside"].index(initial_values[0])
+    default_index_transactions = ["Base", "Upside", "Downside"].index(initial_values[1])
+    default_index_transaction_value = ["Base", "Upside", "Downside"].index(initial_values[2])
 
     #  # --- SELECTS ---
     col1, col2, col3 = st.columns(3)  # Cria 3 colunas de largura igual
     with col1:
-        cenario_usuarios = st.selectbox("Users", ["Base", "Upside", "Downside"], index=0)
+        cenario_usuarios = st.selectbox("Users", ["Base", "Upside", "Downside"], index=default_index_users)
     with col2:
-        cenario_transacoes = st.selectbox("Transactions", ["Base", "Upside", "Downside"], index=0)
+        cenario_transacoes = st.selectbox("Transactions", ["Base", "Upside", "Downside"], index=default_index_transactions)
     with col3:
-        cenario_valor_transacao = st.selectbox("Transaction", ["Base", "Upside", "Downside"], index=0)
+        cenario_valor_transacao = st.selectbox("Transaction", ["Base", "Upside", "Downside"], index=default_index_transaction_value)
 
         # Armazena os valores selecionados no st.session_state
     if "cenario_usuarios_anterior" not in st.session_state:
@@ -177,7 +217,7 @@ with tab1:  # Conteúdo da aba CardFinancialModel
         or cenario_valor_transacao != st.session_state.cenario_valor_transacao_anterior
     ):
         # Atualiza as células no Google Sheets usando pygsheets
-        credentials = pygsheets.authorize(service_file=os.getcwd() + "./cred.json")
+        credentials = pygsheets.authorize(service_account_json=credentials_dump)
         url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
         file = credentials.open_by_url(url_planilha)
         tab = file.worksheet_by_title("CardFinancialModel")
@@ -201,46 +241,68 @@ with tab1:  # Conteúdo da aba CardFinancialModel
 
 with tab2:  # Conteúdo da aba CriptoFinancialModel (vazia por enquanto)
     st.title("Crypto")
-    df_cripto = load_data("CriptoFinancialModel")
+    
+    initial_values = load_initial_select_values("CriptoFinancialModel", ["C5", "C7"])
+    if initial_values:
+        # Define os índices iniciais dos selects
+        default_index_transactions = ["Base", "Max", "Upside", "Downside", "Zero"].index(initial_values[0])
+        default_index_fee = ["Base", "Max", "Upside", "Downside", "Zero"].index(initial_values[1])
 
-    cabecalhoUsers=["Users", "Unit"] + [f"Month {i}" for i in range(1, 61)]
-    criar_tabela_aba(df_cripto, "Users", [11, 13, 2, 63], cabecalho=cabecalhoUsers)
+        col1, col2 = st.columns(2)
+        with col1:
+            cenario_transacoes = st.selectbox("Transactions", ["Base", "Max", "Upside", "Downside", "Zero"], index=default_index_transactions)
+        with col2:
+            cenario_fee = st.selectbox("Fee", ["Base", "Max", "Upside", "Downside", "Zero"], index=default_index_fee)
 
-    cabecalhoCriptoT=["Cripto Transactions", "Unit"] + [f"Month {i}" for i in range(1, 61)]
-    criar_tabela_aba(df_cripto, "Cripto Transactions", [16, 16, 2, 63], cabecalho=cabecalhoCriptoT)
 
-    cabecalhoCriptoF=["% Cripto Fee", "Unit"] + [f"Month {i}" for i in range(1, 61)]
-    criar_tabela_aba(df_cripto, "% Cripto Fee", [24, 24, 2, 63], cabecalho=cabecalhoCriptoF)
+        # Armazena os valores selecionados no st.session_state
+    if "cenario_transactions_anterior" not in st.session_state:
+        st.session_state.cenario_transactions_anterior = cenario_transacoes
+    if "cenario_fee_anterior" not in st.session_state:
+        st.session_state.cenario_fee_anterior = cenario_fee
 
-    cabecalhoTotal=["Total", "Unit"] + [f"Month {i}" for i in range(1, 61)]
-    criar_tabela_aba(df_cripto, "Total", [29, 31, 2, 63], cabecalho=cabecalhoTotal)
+    # Verifica se houve alterações nos valores selecionados
+    if (
+        cenario_transacoes != st.session_state.cenario_transactions_anterior
+        or cenario_fee != st.session_state.cenario_fee_anterior
+    ):
+        # Atualiza as células no Google Sheets usando pygsheets
+        credentials = pygsheets.authorize(service_account_json=credentials_dump)
+        url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
+        file = credentials.open_by_url(url_planilha)
+        tab = file.worksheet_by_title("CriptoFinancialModel")
+
+        if cenario_transacoes != st.session_state.cenario_transactions_anterior:
+            tab.update_value("C5", cenario_transacoes)
+            st.session_state.cenario_transactions_anterior = cenario_transacoes
+        if cenario_fee != st.session_state.cenario_fee_anterior:
+            tab.update_value("C7", cenario_fee)
+            st.session_state.cenario_fee_anterior = cenario_fee
+        # Limpa o cache e recarrega os dados
+        st.cache_resource.clear()
+
+        df_cripto = load_data("CriptoFinancialModel")
+    # df_cripto = load_data("CriptoFinancialModel")
+
+    load_tab2(df_cripto, dollar)
   
 
 with tab3:
     st.title("Account")
 
-    df_cripto = load_data("Conta")
 
     cabecalhoUsers=["Title", "Unit"] + [f"Month {i}" for i in range(1, 61)]
-    criar_tabela_aba(df_cripto, "Users", [10, 22, 2, 63], cabecalho=cabecalhoUsers, remove_blank=True)
+    criar_tabela_aba(df_3, "Users", [10, 22, 2, 63], cabecalho=cabecalhoUsers, remove_blank=True)
 with tab4:
     st.title("Original Projection")
 
-    df_cripto = load_data("Projecao-Original")
-
     cabecalhoUsers=["Title", "Unit"] + [f"Year {i}" for i in range(1, 6)]
-    criar_tabela_aba(df_cripto, "Users", [5, 19, 2, 8], cabecalho=cabecalhoUsers, remove_blank=True)
+    criar_tabela_aba(df_4, "Users", [5, 19, 2, 8], cabecalho=cabecalhoUsers, remove_blank=True)
 with tab5:
     st.title("Proposed Account")
-
-    df_cripto = load_data("Conta-Proposta")
-
     cabecalhoUsers=["Title", "Unit"] + [f"Month {i}" for i in range(1, 61)]
-    criar_tabela_aba(df_cripto, "Users", [10, 22, 2, 63], cabecalho=cabecalhoUsers, remove_blank=True)
+    criar_tabela_aba(df_5, "Users", [10, 22, 2, 63], cabecalho=cabecalhoUsers, remove_blank=True)
 with tab6:
     st.title("Proposed Projection")
-
-    df_cripto = load_data("Projecao-Proposta")
-
     cabecalhoUsers=["Title", "Unit"] + [f"Year {i}" for i in range(1, 6)]
-    criar_tabela_aba(df_cripto, "Users", [4, 18, 2, 8], cabecalho=cabecalhoUsers, remove_blank=True)
+    criar_tabela_aba(df_6, "Users", [4, 18, 2, 8], cabecalho=cabecalhoUsers, remove_blank=True)
