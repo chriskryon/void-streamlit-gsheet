@@ -3,5 +3,4 @@ pandas
 numpy
 yfinance
 pygsheets
-toml
 os
