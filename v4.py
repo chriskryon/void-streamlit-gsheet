@@ -15,15 +15,6 @@ st.set_page_config(
     layout="wide"
 )
 
-if "google_sheets_creds_json" not in st.session_state:
-    with open(".streamlit/secrets.toml", "r") as f:
-        config = toml.load(f)
-    google_sheets_creds = config["google_sheets"]
-    credentials_json = json.dumps(google_sheets_creds)
-    st.session_state["google_sheets_creds_json"] = credentials_json
-
-# google_sheets_creds = st.secrets["google_sheets"]
-
 # Acessar o segredo TOML
 google_sheets_creds = st.secrets["google_sheets"]
 
