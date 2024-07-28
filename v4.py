@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 import yfinance as yf
 import pygsheets
+import toml
+import json
 import os
 
 
@@ -13,13 +15,22 @@ st.set_page_config(
     layout="wide"
 )
 
+if "google_sheets_creds_json" not in st.session_state:
+    with open(".streamlit/secrets.toml", "r") as f:
+        config = toml.load(f)
+    google_sheets_creds = config["google_sheets"]
+    credentials_json = json.dumps(google_sheets_creds)
+    st.session_state["google_sheets_creds_json"] = credentials_json
+
 # --- LEITURA DO ARQUIVO EXCEL ---
 @st.cache_resource(show_spinner=False)  # Use st.cache_resource em vez de st.cache_data
 def load_data(
     sheet_name="CardFinancialModel",
     url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
     ):
-    credentials = pygsheets.authorize(service_file=os.getcwd() + "./.streamlit/secrets.toml")
+    
+    credentials = pygsheets.authorize(service_account_json=st.session_state["google_sheets_creds_json"])
+
     file = credentials.open_by_url(url_planilha)
     tab = file.worksheet_by_title(sheet_name)
 
