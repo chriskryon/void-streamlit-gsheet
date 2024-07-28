@@ -15,22 +15,30 @@ st.set_page_config(
     layout="wide"
 )
 
-# Acessar o segredo TOML
-google_sheets_creds = st.secrets["google_sheets"]
+if "google_sheets_creds_json" not in st.session_state:
+    with open(".streamlit/secrets.toml", "r") as f:
+        config = toml.load(f)
+    google_sheets_creds = config["google_sheets"]
+    credentials_json = json.dumps(google_sheets_creds)
+    st.session_state["google_sheets_creds_json"] = credentials_json
+
+# google_sheets_creds = st.secrets["google_sheets"]
+
+
 
 # Construir o dicionário JSON
 credentials_json = {
-    "type": google_sheets_creds["type"],
-    "project_id": google_sheets_creds["project_id"],
-    "private_key_id": google_sheets_creds["private_key_id"],
-    "private_key": google_sheets_creds["private_key"],
-    "client_email": google_sheets_creds["client_email"],
-    "client_id": google_sheets_creds["client_id"],
-    "auth_uri": google_sheets_creds["auth_uri"],
-    "token_uri": google_sheets_creds["token_uri"],
-    "auth_provider_x509_cert_url": google_sheets_creds["auth_provider_x509_cert_url"],
-    "client_x509_cert_url": google_sheets_creds["client_x509_cert_url"],
-    "universe_domain": google_sheets_creds["universe_domain"],
+    "type": st.secrets["google_sheets"]["type"],
+    "project_id": st.secrets["google_sheets"]["project_id"],
+    "private_key_id": st.secrets["google_sheets"]["private_key_id"],
+    "private_key": st.secrets["google_sheets"]["private_key"],
+    "client_email": st.secrets["google_sheets"]["client_email"],
+    "client_id": st.secrets["google_sheets"]["client_id"],
+    "auth_uri": st.secrets["google_sheets"]["auth_uri"],
+    "token_uri": st.secrets["google_sheets"]["token_uri"],
+    "auth_provider_x509_cert_url": st.secrets["google_sheets"]["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": st.secrets["google_sheets"]["client_x509_cert_url"],
+    "universe_domain": st.secrets["google_sheets"]["universe_domain"],
 }
 
 aa = json.dumps(credentials_json)
@@ -42,10 +50,8 @@ def load_data(
     sheet_name="CardFinancialModel",
     url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
     ):
-    print(google_sheets_creds)
-    print("print(google_sheets_creds)")
+    
     credentials = pygsheets.authorize(service_account_json=aa)
-
 
 
     file = credentials.open_by_url(url_planilha)
