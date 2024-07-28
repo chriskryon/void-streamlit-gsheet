@@ -19,7 +19,7 @@ def load_data(
     sheet_name="CardFinancialModel",
     url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
     ):
-    credentials = pygsheets.authorize(service_file=os.getcwd() + "./cred.json")
+    credentials = pygsheets.authorize(service_file=os.getcwd() + "./.streamlit/secrets.toml")
     file = credentials.open_by_url(url_planilha)
     tab = file.worksheet_by_title(sheet_name)
 
