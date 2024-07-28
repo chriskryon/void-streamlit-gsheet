@@ -4,5 +4,4 @@ numpy
 yfinance
 pygsheets
 toml
-json
 os
