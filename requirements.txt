@@ -1,5 +1,8 @@
 streamlit
 pandas
-openpyxl
-pygsheets
+numpy
 yfinance
+pygsheets
+toml
+json
+os
