@@ -42,6 +42,9 @@ credentials_json = {
     "universe_domain": google_sheets_creds["universe_domain"],
 }
 
+aa = json.dumps(credentials_json)
+
+
 # --- LEITURA DO ARQUIVO EXCEL ---
 @st.cache_resource(show_spinner=False)  # Use st.cache_resource em vez de st.cache_data
 def load_data(
@@ -50,7 +53,7 @@ def load_data(
     ):
     print(google_sheets_creds)
     print("print(google_sheets_creds)")
-    credentials = pygsheets.authorize(service_account_json=google_sheets_creds)
+    credentials = pygsheets.authorize(service_account_json=aa)
 
 
 
