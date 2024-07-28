@@ -48,8 +48,10 @@ def load_data(
     sheet_name="CardFinancialModel",
     url_planilha="https://docs.google.com/spreadsheets/d/1ANZZQpT6LIWyKHFvzdqcOXEnV99DR3RpPijUE74HXDs/edit?usp=sharing"
     ):
-    
-    credentials = pygsheets.authorize(service_account_json=credentials_json)
+    print(google_sheets_creds)
+    print("print(google_sheets_creds)")
+    credentials = pygsheets.authorize(service_account_json=google_sheets_creds)
+
 
 
     file = credentials.open_by_url(url_planilha)
