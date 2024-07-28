@@ -14,19 +14,20 @@ st.set_page_config(
     page_icon="💳",
     layout="wide"
 )
+
 # Construir o dicionário JSON
 credentials_json = {
-    "type": st.secrets["google_sheets"]["type"],
-    "project_id": st.secrets["google_sheets"]["project_id"],
-    "private_key_id": st.secrets["google_sheets"]["private_key_id"],
-    "private_key": st.secrets["google_sheets"]["private_key"],
-    "client_email": st.secrets["google_sheets"]["client_email"],
-    "client_id": st.secrets["google_sheets"]["client_id"],
-    "auth_uri": st.secrets["google_sheets"]["auth_uri"],
-    "token_uri": st.secrets["google_sheets"]["token_uri"],
-    "auth_provider_x509_cert_url": st.secrets["google_sheets"]["auth_provider_x509_cert_url"],
-    "client_x509_cert_url": st.secrets["google_sheets"]["client_x509_cert_url"],
-    "universe_domain": st.secrets["google_sheets"]["universe_domain"],
+    "type": st.secrets["type"],
+    "project_id": st.secrets["project_id"],
+    "private_key_id": st.secrets["private_key_id"],
+    "private_key": st.secrets["private_key"],
+    "client_email": st.secrets["client_email"],
+    "client_id": st.secrets["client_id"],
+    "auth_uri": st.secrets["auth_uri"],
+    "token_uri": st.secrets["token_uri"],
+    "auth_provider_x509_cert_url": st.secrets["auth_provider_x509_cert_url"],
+    "client_x509_cert_url": st.secrets["client_x509_cert_url"],
+    "universe_domain": st.secrets["universe_domain"],
 }
 
 aa = json.dumps(credentials_json)
