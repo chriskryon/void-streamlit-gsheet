@@ -1,2 +1,6 @@
 cred.json
 secrets.toml
+.streamlit
+/.streamlit
+/.venv
+.venv
